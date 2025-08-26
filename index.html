@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>综合心理测评</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 jsPDF 库用于生成PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Arial', 'sans-serif';
+        }
+        .quiz-page {
+            transition: opacity 0.5s ease-in-out;
+        }
+        /* 自定义单选按钮样式 */
+        .custom-radio {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid #d1d5db;
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        }
+        .custom-radio:checked {
+            border-color: #4f46e5;
+            background-color: #4f46e5;
+        }
+        .custom-radio:checked::after {
+            content: '';
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        /* 结果条动画 */
+        .result-bar-inner {
+            transition: width 1s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
+
+    <div class="w-full max-w-4xl mx-auto">
+        <!-- 页面1: 元认知 -->
+        <div id="page1" class="quiz-page bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">第一部分：元认知意识自测问卷</h1>
+                <p class="text-gray-600 mt-2 text-lg">Metacognitive Awareness Inventory (MAI)</p>
+            </div>
+            <p class="text-gray-700 bg-gray-50 border-l-4 border-indigo-500 p-4 rounded-r-lg mb-8">
+                请将自己想象成一个学习者，仔细阅读每一个陈述。思考当您扮演学习者角色时，该陈述对您来说通常是“是”还是“否”。
+            </p>
+            <form id="form-mai">
+                <div id="questions-mai" class="space-y-6 max-h-[60vh] overflow-y-auto pr-4"></div>
+                <div class="mt-10 text-center">
+                    <button type="button" id="next-btn-1" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                        我已完成
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 页面2: 大五人格 -->
+        <div id="page2" class="quiz-page hidden bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">第二部分：大五人格测试问卷</h1>
+                <p class="text-gray-600 mt-2 text-lg">Big Five Personality Test</p>
+            </div>
+             <p class="text-gray-700 bg-gray-50 border-l-4 border-indigo-500 p-4 rounded-r-lg mb-8">
+                请根据您的真实情况，评估下列陈述与您自身相符的程度。
+            </p>
+            <form id="form-big-five">
+                <div id="questions-big-five" class="space-y-6 max-h-[60vh] overflow-y-auto pr-4"></div>
+                <div class="mt-10 text-center">
+                    <button type="button" id="next-btn-2" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                        我已完成
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 页面3: 学习风格 -->
+        <div id="page3" class="quiz-page hidden bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">第三部分：学习风格问卷</h1>
+                <p class="text-gray-600 mt-2 text-lg">Learning Style Questionnaire</p>
+            </div>
+             <p class="text-gray-700 bg-gray-50 border-l-4 border-indigo-500 p-4 rounded-r-lg mb-8">
+                请根据您的通常做法，选择最符合您情况的选项。
+            </p>
+            <form id="form-learning-style">
+                <div id="questions-learning-style" class="space-y-6 max-h-[60vh] overflow-y-auto pr-4"></div>
+                <div class="mt-10 text-center">
+                    <button type="button" id="next-btn-3" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                        我已完成，查看结果
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 页面4: 结果 -->
+        <div id="page4" class="quiz-page hidden bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+             <div class="text-center mb-8">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">您的综合评估结果</h1>
+                <p class="text-gray-600 mt-2">以下是您在各项评测中的得分情况。</p>
+            </div>
+            <div id="results-wrapper" class="space-y-8"></div>
+            
+            <div class="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4 border-t pt-8">
+                <button id="download-pdf-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105 w-full sm:w-auto">
+                    下载分数报告 (PDF)
+                </button>
+                <button id="interpretation-btn" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-transform transform hover:scale-105 w-full sm:w-auto">
+                    查看分数解读
+                </button>
+            </div>
+
+            <div id="contact-info" class="hidden mt-8 bg-indigo-50 p-6 rounded-2xl border border-indigo-200 text-center transition-all duration-500">
+                <div id="interpretation-text" class="mb-6 text-left space-y-6"></div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4 mt-8">专业解读与个人发展咨询</h3>
+                <p class="text-gray-700 max-w-2xl mx-auto mb-6">
+                    元认知、人格特质和学习风格是影响个人发展的关键因素。如果您希望深入了解您的测试结果，<strong class="text-indigo-700">请将下载的PDF报告发送给教育心理专家Angela老师</strong>，以获得更具针对性的提升策略。
+                </p>
+                <div class="inline-block bg-white p-4 rounded-lg shadow-sm">
+                    <img src="/Users/sirui/Documents/创业/吴思睿教育心理咨询工作室/Angela二维码.png" alt="微信二维码" class="w-48 h-48 mx-auto rounded-md">
+                    <p class="mt-4 text-lg font-semibold text-gray-900">Angela 老师</p>
+                    <p class="text-gray-600 font-mono text-lg">微信: o_oAngela</p>
+                </div>
+            </div>
+            <div class="mt-10 text-center">
+                <button id="restart-btn" class="bg-gray-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-transform transform hover:scale-105">
+                    重新测试
+                </button>
+            </div>
+        </div>
+        
+        <!-- 消息提示框 -->
+        <div id="alert-box" class="hidden fixed top-5 right-5 bg-red-500 text-white py-3 px-5 rounded-lg shadow-lg z-50">
+            <p>请完成所有题目再进入下一页。</p>
+        </div>
+
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- 数据定义 ---
+        const questionsMAI = [ "1. 我会周期性地问自己是否正在实现我的目标。", "2. 在回答问题前，我会考虑几种不同的备选方案。", "3. 我会尝试使用过去行之有效的策略。", "4. 我会调整自己的学习节奏，以确保有足够的时间。", "5. 我了解自己的智力优势和劣势。", "6. 在开始一项任务前，我会思考我真正需要学习什么。", "7. 考完试后，我知道自己考得怎么样。", "8. 在开始一项任务前，我会设定具体的目标。", "9. 当遇到重要信息时，我会放慢速度。", "10. 我知道哪种信息是最需要学习的。", "11. 解决问题时，我会问自己是否考虑了所有选项。", "12. 我擅长组织信息。", "13. 我会有意识地将注意力集中在重要信息上。", "14. 我使用的每一种策略都有其特定的目的。", "15. 当我对某个主题有所了解时，我学得最好。", "16. 我知道老师期望我学到什么。", "17. 我擅长记忆信息。", "18. 我会根据不同的情况使用不同的学习策略。", "19. 完成任务后，我会问自己是否有更简单的方法。", "20. 我能控制自己的学习效果。", "21. 我会周期性地复习，以帮助我理解重要的关系。", "22. 在开始学习材料之前，我会问自己一些关于材料的问题。", "23. 我会想出几种解决问题的方法，并选择最好的一种。", "24. 学完之后，我会总结我所学到的内容。", "25. 当我不懂某件事时，我会向他人求助。", "26. 当需要时，我能激励自己去学习。", "27. 我清楚自己在学习时使用了哪些策略。", "28. 我发现自己在学习时会分析策略的有效性。", "29. 我会用我的智力优势来弥补我的劣势。", "30. 我关注新信息的意义和重要性。", "31. 我会创造自己的例子来使信息更有意义。", "32. 我能很好地判断自己对某件事的理解程度。", "33. 我发现自己会自动使用有用的学习策略。", "34. 我发现自己会定期停下来检查我的理解情况。", "35. 我知道我使用的每种策略在什么时候最有效。", "36. 完成后，我会问自己我的目标完成得如何。", "37. 我会画图或图表来帮助我在学习时理解。", "38. 解决问题后，我会问自己是否考虑了所有选项。", "39. 我会尝试将新信息翻译成我自己的话。", "40. 当我理解失败时，我会改变策略。", "41. 我会利用文本的组织结构来帮助我学习。", "42. 在开始一项任务前，我会仔细阅读说明。", "43. 我会问自己正在阅读的内容是否与我已知的内容有关。", "44. 当我感到困惑时，我会重新评估我的假设。", "45. 我会组织我的时间以最好地完成我的目标。", "46. 当我对某个主题感兴趣时，我会学到更多。", "47. 我会尝试将学习分解成更小的步骤。", "48. 我关注整体意义而非具体细节。", "49. 在学习新东西时，我会问自己我做得怎么样。", "50. 完成任务后，我会问自己是否学到了尽可能多的东西。", "51. 我会停下来，重新回顾那些不清楚的新信息。", "52. 当我感到困惑时，我会停下来重读。" ];
+        const questionsBigFive = [ { text: "1. 我是一个活跃健谈的人。", trait: 'E', score: 1 }, { text: "2. 我容易挑剔别人的毛病。", trait: 'A', score: -1 }, { text: "3. 我做事彻底。", trait: 'C', score: 1 }, { text: "4. 我情绪多变。", trait: 'N', score: 1 }, { text: "5. 我富于想象。", trait: 'O', score: 1 }, { text: "6. 我比较安静。", trait: 'E', score: -1 }, { text: "7. 我乐于助人，不自私。", trait: 'A', score: 1 }, { text: "8. 我有时有点粗心。", trait: 'C', score: -1 }, { text: "9. 我情绪稳定，不易心烦意乱。", trait: 'N', score: -1 }, { text: "10. 我缺少创意。", trait: 'O', score: -1 }, { text: "11. 我精力充沛。", trait: 'E', score: 1 }, { text: "12. 我能很快与人展开争论。", trait: 'A', score: -1 }, { text: "13. 我做事可靠。", trait: 'C', score: 1 }, { text: "14. 我会感到紧张。", trait: 'N', score: 1 }, { text: "15. 我对艺术和自然有深刻的感悟。", trait: 'O', score: 1 }, { text: "16. 我不善言辞。", trait: 'E', score: -1 }, { text: "17. 我待人宽厚。", trait: 'A', score: 1 }, { text: "18. 我做事缺乏条理。", trait: 'C', score: -1 }, { text: "19. 我沉着冷静。", trait: 'N', score: -1 }, { text: "20. 我对抽象概念不感兴趣。", trait: 'O', score: -1 }, { text: "21. 我充满自信。", trait: 'E', score: 1 }, { text: "22. 我有时对人无礼。", trait: 'A', score: -1 }, { text: "23. 我做事持之以恒，直到完成。", trait: 'C', score: 1 }, { text: "24. 我容易担忧。", trait: 'N', score: 1 }, { text: "25. 我有丰富的词汇。", trait: 'O', score: 1 }, { text: "26. 我不爱出风头。", trait: 'E', score: -1 }, { text: "27. 我心肠软。", trait: 'A', score: 1 }, { text: "28. 我做事杂乱无章。", trait: 'C', score: -1 }, { text: "29. 我不容易被激怒。", trait: 'N', score: -1 }, { text: "30. 我想象力贫乏。", trait: 'O', score: -1 }, { text: "31. 我在人多的时候健谈。", trait: 'E', score: 1 }, { text: "32. 我喜欢与人合作。", trait: 'A', score: 1 }, { text: "33. 我做事有计划。", trait: 'C', score: 1 }, { text: "34. 我经常感到沮丧。", trait: 'N', score: 1 }, { text: "35. 我善于思考。", trait: 'O', score: 1 }, { text: "36. 我在陌生人面前会拘谨。", trait: 'E', score: -1 }, { text: "37. 我不关心他人。", trait: 'A', score: -1 }, { text: "38. 我做事效率高。", trait: 'C', score: 1 }, { text: "39. 我很少感到悲伤。", trait: 'N', score: -1 }, { text: "40. 我对事物没有好奇心。", trait: 'O', score: -1 }, { text: "41. 我是晚会的灵魂人物。", trait: 'E', score: 1 }, { text: "42. 我体谅他人。", trait: 'A', score: 1 }, { text: "43. 我容易分心。", trait: 'C', score: -1 }, { text: "44. 我是一个放松的人。", trait: 'N', score: -1 }, { text: "45. 我有很强的艺术兴趣。", trait: 'O', score: 1 }, { text: "46. 我在人群中倾向于退缩。", trait: 'E', score: -1 }, { text: "47. 我对他人的感受不感兴趣。", trait: 'A', score: -1 }, { text: "48. 我注重细节。", trait: 'C', score: 1 }, { text: "49. 我很少感到焦虑。", trait: 'N', score: -1 }, { text: "50. 我不善于抽象思考。", trait: 'O', score: -1 }, { text: "51. 我在别人面前感到自在。", trait: 'E', score: 1 }, { text: "52. 我让他人感到自在。", trait: 'A', score: 1 }, { text: "53. 我能完成任务。", trait: 'C', score: 1 }, { text: "54. 我经常感到不安。", trait: 'N', score: 1 }, { text: "55. 我有独到的见解。", trait: 'O', score: 1 }, { text: "56. 我不介意成为众人瞩目的焦点。", trait: 'E', score: 1 }, { text: "57. 我同情无家可归的人。", trait: 'A', score: 1 }, { text: "58. 我总是把东西放得井井有条。", trait: 'C', score: 1 }, { text: "59. 我很少感到情绪激动。", trait: 'N', score: -1 }, { text: "60. 我需要把事情解释得很清楚。", trait: 'O', score: -1 } ];
+        const questionsLearningStyle = [ { text: "1. 我通过听包含信息、解释和讨论的讲座能更好地记住内容。", style: 'A' }, { text: "2. 我更喜欢看到写在黑板上的信息，并辅以视觉教具和指定阅读材料。", style: 'V' }, { text: "3. 我喜欢把事情写下来或做笔记以便于视觉回顾。", style: 'V' }, { text: "4. 我更喜欢在课堂上使用海报、模型或实际操作等活动。", style: 'T' }, { text: "5. 我需要对图表、图形或视觉指示进行解释。", style: 'A' }, { text: "6. 我喜欢动手或制作东西。", style: 'T' }, { text: "7. 我擅长并喜欢制作图表和图形。", style: 'V' }, { text: "8. 当听到成对的声音时，我能分辨它们是否匹配。", style: 'A' }, { text: "9. 我通过多次写下东西来更好地记住它们。", style: 'T' }, { text: "10. 我能轻松理解并遵循地图上的指示。", style: 'V' }, { text: "11. 我通过听讲座和录音带在学术科目上表现最好。", style: 'A' }, { text: "12. 我口袋里会玩弄硬币或钥匙。", style: 'T' }, { text: "13. 我通过大声重复单词比在纸上写单词更能学好拼写。", style: 'A' }, { text: "14. 我通过在报纸或网上阅读新闻文章比听广播或网络报道更能理解它。", style: 'V' }, { text: "15. 我学习时会嚼口香糖、吸烟或吃零食。", style: 'T' }, { text: "16. 我认为记住某事的最好方法是在脑海中想象它的画面。", style: 'V' }, { text: "17. 我通过“手指拼写”来学习单词的拼写。", style: 'T' }, { text: "18. 我宁愿听一场好的讲座或演讲，也不愿阅读相同材料。", style: 'A' }, { text: "19. 我擅长玩和解决拼图和迷宫。", style: 'V' }, { text: "20. 我在学习期间会手里紧握物体。", style: 'T' }, { text: "21. 我更喜欢在收音机或网上听新闻，而不是在报纸或网上阅读。", style: 'A' }, { text: "22. 我更喜欢通过阅读来获取关于一个有趣主题的信息。", style: 'V' }, { text: "23. 我在触摸他人（拥抱、握手等）时感到非常自在。", style: 'T' }, { text: "24. 我遵循口头指示比书面指示更好。", style: 'A' } ];
+
+        // --- 页面元素 ---
+        const pages = document.querySelectorAll('.quiz-page');
+        const nextBtn1 = document.getElementById('next-btn-1');
+        const nextBtn2 = document.getElementById('next-btn-2');
+        const nextBtn3 = document.getElementById('next-btn-3');
+        const restartBtn = document.getElementById('restart-btn');
+        const interpretationBtn = document.getElementById('interpretation-btn');
+        const downloadPdfBtn = document.getElementById('download-pdf-btn');
+        const contactInfo = document.getElementById('contact-info');
+        const alertBox = document.getElementById('alert-box');
+
+        // --- 页面切换函数 ---
+        function switchPage(pageNumber) {
+            pages.forEach(p => p.classList.add('hidden', 'opacity-0'));
+            const targetPage = document.getElementById(`page${pageNumber}`);
+            targetPage.classList.remove('hidden');
+            setTimeout(() => targetPage.classList.remove('opacity-0'), 50);
+            window.scrollTo(0, 0);
+        }
+
+        // --- 问卷生成函数 ---
+        function populateMAI() {
+            const wrapper = document.getElementById('questions-mai');
+            wrapper.innerHTML = questionsMAI.map((q, i) => `<div class="bg-gray-50 p-5 rounded-lg border border-gray-200"><p class="text-lg font-medium text-gray-800">${q}</p><div class="mt-4 flex items-center space-x-8"><label class="flex items-center space-x-3 cursor-pointer"><input type="radio" name="mai_q${i+1}" value="1" class="custom-radio" required><span class="text-gray-700">是</span></label><label class="flex items-center space-x-3 cursor-pointer"><input type="radio" name="mai_q${i+1}" value="0" class="custom-radio" required><span class="text-gray-700">否</span></label></div></div>`).join('');
+        }
+        function populateBigFive() {
+            const wrapper = document.getElementById('questions-big-five');
+            const options = [ { label: "非常不符", value: 1 }, { label: "比较不符", value: 2 }, { label: "不确定", value: 3 }, { label: "比较符合", value: 4 }, { label: "非常符合", value: 5 } ];
+            wrapper.innerHTML = questionsBigFive.map((q, i) => `<div class="bg-gray-50 p-5 rounded-lg border border-gray-200"><p class="text-lg font-medium text-gray-800">${q.text}</p><div class="mt-4 flex flex-wrap gap-x-6 gap-y-3">${options.map(opt => `<label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="bf_q${i+1}" value="${opt.value}" class="custom-radio" required><span class="text-gray-700">${opt.label}</span></label>`).join('')}</div></div>`).join('');
+        }
+        function populateLearningStyle() {
+            const wrapper = document.getElementById('questions-learning-style');
+            const options = [ { label: "经常", value: 5 }, { label: "有时", value: 3 }, { label: "很少", value: 1 } ];
+            wrapper.innerHTML = questionsLearningStyle.map((q, i) => `<div class="bg-gray-50 p-5 rounded-lg border border-gray-200"><p class="text-lg font-medium text-gray-800">${q.text}</p><div class="mt-4 flex flex-wrap gap-x-6 gap-y-3">${options.map(opt => `<label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="ls_q${i+1}" value="${opt.value}" class="custom-radio" required><span class="text-gray-700">${opt.label}</span></label>`).join('')}</div></div>`).join('');
+        }
+
+        // --- 验证函数 ---
+        function validateForm(formId, questionCount) {
+            const form = document.getElementById(formId);
+            const answered = form.querySelectorAll('input[type="radio"]:checked').length;
+            if (answered < questionCount) {
+                alertBox.classList.remove('hidden');
+                setTimeout(() => alertBox.classList.add('hidden'), 3000);
+                return false;
+            }
+            return true;
+        }
+
+        // --- 事件监听 ---
+        nextBtn1.addEventListener('click', () => { if (validateForm('form-mai', questionsMAI.length)) switchPage(2); });
+        nextBtn2.addEventListener('click', () => { if (validateForm('form-big-five', questionsBigFive.length)) switchPage(3); });
+        nextBtn3.addEventListener('click', () => { if (validateForm('form-learning-style', questionsLearningStyle.length)) { displayAllResults(); switchPage(4); } });
+        
+        interpretationBtn.addEventListener('click', () => {
+            generateInterpretationText();
+            contactInfo.classList.toggle('hidden');
+            if (!contactInfo.classList.contains('hidden')) {
+                contactInfo.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+        });
+        
+        restartBtn.addEventListener('click', () => {
+            document.getElementById('form-mai').reset();
+            document.getElementById('form-big-five').reset();
+            document.getElementById('form-learning-style').reset();
+            contactInfo.classList.add('hidden');
+            switchPage(1);
+        });
+
+        downloadPdfBtn.addEventListener('click', () => {
+            generatePDF();
+        });
+
+        // --- 结果计算与显示 ---
+        function displayAllResults() {
+            const wrapper = document.getElementById('results-wrapper');
+            wrapper.innerHTML = '';
+            
+            const maiResults = calculateMAIScores();
+            let maiHtml = `<div class="mb-8"><h2 class="text-2xl font-bold text-gray-700 border-b-2 border-indigo-200 pb-2 mb-4">元认知意识评估结果</h2><div class="space-y-4">`;
+            for (const key in maiResults) {
+                const dim = maiResults[key];
+                const percentage = (dim.score / dim.maxScore) * 100;
+                maiHtml += `<div><div class="flex justify-between items-center mb-1"><span class="text-lg font-semibold text-gray-700">${dim.name}</span><span class="font-bold text-lg text-gray-800">${dim.score} / ${dim.maxScore}</span></div><div class="w-full bg-gray-200 rounded-full h-6"><div class="bg-blue-500 h-6 rounded-full flex items-center justify-center text-white font-bold result-bar-inner" style="width: 0%;" data-width="${percentage}%">${Math.round(percentage)}%</div></div></div>`;
+            }
+            maiHtml += `</div></div>`;
+            wrapper.innerHTML += maiHtml;
+
+            const bigFiveResults = calculateBigFiveScores();
+            let bigFiveHtml = `<div class="mb-8"><h2 class="text-2xl font-bold text-gray-700 border-b-2 border-indigo-200 pb-2 mb-4">大五人格评估结果</h2><div class="space-y-4">`;
+             for (const key in bigFiveResults) {
+                const trait = bigFiveResults[key];
+                const percentage = (trait.score - trait.count) / (trait.maxScore - trait.count) * 100;
+                bigFiveHtml += `<div><div class="flex justify-between items-baseline mb-1"><span class="text-lg font-semibold text-gray-700">${trait.name} (${key})</span><span class="text-sm text-gray-500">${trait.lowLabel} &leftrightarrow; ${trait.highLabel}</span></div><div class="w-full bg-gray-200 rounded-full h-6"><div class="bg-purple-500 h-6 rounded-full flex items-center justify-center text-white font-bold result-bar-inner" style="width: 0%;" data-width="${percentage}%">${trait.score} / ${trait.maxScore}</div></div></div>`;
+            }
+            bigFiveHtml += `</div></div>`;
+            wrapper.innerHTML += bigFiveHtml;
+
+            const learningStyleResults = calculateLearningStyleScores();
+            let lsHtml = `<div class="mb-8"><h2 class="text-2xl font-bold text-gray-700 border-b-2 border-indigo-200 pb-2 mb-4">学习风格评估结果</h2><div class="space-y-4">`;
+            for (const key in learningStyleResults) {
+                const style = learningStyleResults[key];
+                const percentage = (style.score - style.count) / (style.maxScore - style.count) * 100;
+                lsHtml += `<div><div class="flex justify-between items-center mb-1"><span class="text-lg font-semibold text-gray-700">${style.name}</span><span class="font-bold text-lg text-gray-800">${style.score} / ${style.maxScore}</span></div><div class="w-full bg-gray-200 rounded-full h-6"><div class="bg-green-500 h-6 rounded-full flex items-center justify-center text-white font-bold result-bar-inner" style="width: 0%;" data-width="${percentage}%">${Math.round(percentage)}%</div></div></div>`;
+            }
+            lsHtml += `</div></div>`;
+            wrapper.innerHTML += lsHtml;
+
+            setTimeout(() => { document.querySelectorAll('.result-bar-inner').forEach(bar => { bar.style.width = bar.getAttribute('data-width'); }); }, 100);
+        }
+
+        function calculateMAIScores() {
+            const dimensions = { 
+                declarative: { name: '陈述性知识', name_en: 'Declarative Knowledge', questions: [5, 10, 12, 16, 17, 20, 32, 46], score: 0 }, 
+                procedural: { name: '程序性知识', name_en: 'Procedural Knowledge', questions: [3, 14, 27, 33], score: 0 }, 
+                conditional: { name: '条件性知识', name_en: 'Conditional Knowledge', questions: [15, 18, 26, 29, 35], score: 0 }, 
+                planning: { name: '计划', name_en: 'Planning', questions: [4, 6, 8, 22, 23, 42, 45], score: 0 }, 
+                infoManagement: { name: '信息管理策略', name_en: 'Info. Management', questions: [9, 13, 30, 31, 37, 39, 41, 43, 47, 48], score: 0 }, 
+                monitoring: { name: '理解监控', name_en: 'Monitoring', questions: [1, 2, 11, 21, 28, 34, 49], score: 0 }, 
+                debugging: { name: '调试策略', name_en: 'Debugging Strategies', questions: [25, 40, 44, 51, 52], score: 0 }, 
+                evaluation: { name: '评估', name_en: 'Evaluation', questions: [7, 19, 24, 36, 38, 50], score: 0 } 
+            };
+            for (const key in dimensions) {
+                const dim = dimensions[key];
+                dim.maxScore = dim.questions.length;
+                dim.questions.forEach(qNum => {
+                    const val = document.querySelector(`input[name="mai_q${qNum}"]:checked`)?.value;
+                    if (val) dim.score += parseInt(val);
+                });
+            }
+            return dimensions;
+        }
+
+        function calculateBigFiveScores() {
+            const traits = { 
+                E: { name: '外向性', name_en: 'Extraversion', lowLabel: '内向', highLabel: '外向', lowLabel_en: 'Introversion', highLabel_en: 'Extraversion', score: 0, count: 0 },
+                A: { name: '宜人性', name_en: 'Agreeableness', lowLabel: '挑战', highLabel: '合作', lowLabel_en: 'Challenging', highLabel_en: 'Cooperative', score: 0, count: 0 },
+                C: { name: '尽责性', name_en: 'Conscientiousness', lowLabel: '灵活', highLabel: '尽责', lowLabel_en: 'Flexible', highLabel_en: 'Conscientious', score: 0, count: 0 },
+                N: { name: '神经质', name_en: 'Neuroticism', lowLabel: '稳定', highLabel: '敏感', lowLabel_en: 'Stable', highLabel_en: 'Sensitive', score: 0, count: 0 },
+                O: { name: '开放性', name_en: 'Openness', lowLabel: '务实', highLabel: '开放', lowLabel_en: 'Pragmatic', highLabel_en: 'Open', score: 0, count: 0 }
+            };
+            questionsBigFive.forEach((q, i) => {
+                const trait = traits[q.trait];
+                const val = document.querySelector(`input[name="bf_q${i+1}"]:checked`)?.value;
+                if (val) {
+                    let score = parseInt(val);
+                    if (q.score === -1) { score = 6 - score; }
+                    trait.score += score;
+                    trait.count++;
+                }
+            });
+            for(const key in traits) { traits[key].maxScore = traits[key].count * 5; }
+            return traits;
+        }
+
+        function calculateLearningStyleScores() {
+            const styles = {
+                V: { name: '视觉型 (Visual)', name_en: 'Visual', score: 0, count: 0 },
+                A: { name: '听觉型 (Auditory)', name_en: 'Auditory', score: 0, count: 0 },
+                T: { name: '动觉型 (Tactile)', name_en: 'Tactile', score: 0, count: 0 }
+            };
+            questionsLearningStyle.forEach((q, i) => {
+                const style = styles[q.style];
+                const val = document.querySelector(`input[name="ls_q${i+1}"]:checked`)?.value;
+                if (val) {
+                    style.score += parseInt(val);
+                    style.count++;
+                }
+            });
+            for(const key in styles) { styles[key].maxScore = styles[key].count * 5; }
+            return styles;
+        }
+        
+        function generateInterpretationText() {
+            const interpretationWrapper = document.getElementById('interpretation-text');
+            
+            // 元认知解读
+            const maiResults = calculateMAIScores();
+            let maiArray = Object.values(maiResults).map(dim => ({ name: dim.name, score: (dim.score / dim.maxScore) * 100 }));
+            maiArray.sort((a, b) => b.score - a.score);
+            let maiHtml = `<div class="mb-6"><h3 class="text-xl font-bold text-gray-800 mb-3">元认知解读</h3>
+                           <p class="text-gray-600">元认知是您对自己思考过程的认知和调控能力。分数越高，意味着您越擅长规划、监控和评估自己的学习过程。</p>
+                           <p class="mt-2 text-gray-700">您表现最突出的方面是<strong class="text-indigo-600">${maiArray[0].name}</strong>，表明您在此领域有很强的自我意识。相对而言，<strong class="text-indigo-600">${maiArray[maiArray.length - 1].name}</strong>是您未来可以关注和提升的领域。</p></div>`;
+
+            // 大五人格解读
+            const bigFiveResults = calculateBigFiveScores();
+            let bigFiveHtml = `<div class="mb-6"><h3 class="text-xl font-bold text-gray-800 mb-3">大五人格解读</h3>
+                               <p class="text-gray-600">大五人格描述了您在五个核心维度上的特质倾向，这有助于理解您的行为模式和偏好。</p>
+                               <ul class="space-y-2 list-disc list-inside mt-2 text-gray-700">`;
+            for(const key in bigFiveResults) {
+                const trait = bigFiveResults[key];
+                const percentage = (trait.score - trait.count) / (trait.maxScore - trait.count) * 100;
+                const tendency = percentage > 50 ? trait.highLabel : trait.lowLabel;
+                bigFiveHtml += `<li>在<strong class="font-semibold">${trait.name}</strong>维度上，您的得分倾向于<strong class="text-indigo-600">${tendency}</strong>，这通常意味着您可能表现出相应的特质。</li>`;
+            }
+            bigFiveHtml += `</ul></div>`;
+
+            // 学习风格解读
+            const lsResults = calculateLearningStyleScores();
+            let lsHtml = `<div><h3 class="text-xl font-bold text-gray-800 mb-3">学习风格解读</h3><p class="mb-4 text-gray-600">了解您的主导学习风格，可以帮助您选择更高效的学习策略。以下是您的风格特点：</p><ul class="space-y-3 list-disc list-inside">`;
+            let dominantStyle = 'V';
+            if (lsResults.A.score > lsResults[dominantStyle].score) dominantStyle = 'A';
+            if (lsResults.T.score > lsResults[dominantStyle].score) dominantStyle = 'T';
+            lsHtml += `<li><strong class="font-semibold text-gray-700">视觉型 (${lsResults.V.score}/${lsResults.V.maxScore}):</strong> 偏好通过图表、图像、笔记和阅读来学习。将信息可视化是您的强项。</li>`;
+            lsHtml += `<li><strong class="font-semibold text-gray-700">听觉型 (${lsResults.A.score}/${lsResults.A.maxScore}):</strong> 偏好通过听讲、讨论和口头复述来学习。声音和语言对您至关重要。</li>`;
+            lsHtml += `<li><strong class="font-semibold text-gray-700">动觉型 (${lsResults.T.score}/${lsResults.T.maxScore}):</strong> 偏好通过动手实践、操作和身体活动来学习。您在“做”中学得最好。</li>`;
+            lsHtml += `</ul><p class="mt-4 text-gray-700 font-semibold">根据您的得分，您的主导学习风格可能是<span class="text-indigo-600">“${lsResults[dominantStyle].name}”</span>。您可以侧重于发挥这一优势，同时有意识地锻炼其他风格，以适应不同的学习场景。</p></div>`;
+            
+            interpretationWrapper.innerHTML = maiHtml + bigFiveHtml + lsHtml;
+        }
+
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Set the font to the loaded English-compatible font
+            doc.setFont('helvetica', 'normal');
+            
+            let y = 20;
+            const lineHeight = 10;
+            const indent = 10;
+            const sectionGap = 15;
+
+            doc.setFontSize(22);
+            doc.text("Comprehensive Assessment Report", doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
+            y += sectionGap;
+
+            const maiResults = calculateMAIScores();
+            doc.setFontSize(18);
+            doc.text("Metacognitive Awareness Results", indent, y);
+            y += lineHeight;
+            doc.setFontSize(12);
+            for(const key in maiResults) {
+                const dim = maiResults[key];
+                doc.text(`${dim.name_en}: ${dim.score} / ${dim.maxScore}`, indent + 5, y);
+                y += lineHeight;
+            }
+            y += sectionGap / 2;
+
+            const bigFiveResults = calculateBigFiveScores();
+            doc.setFontSize(18);
+            doc.text("Big Five Personality Results", indent, y);
+            y += lineHeight;
+            doc.setFontSize(12);
+            for(const key in bigFiveResults) {
+                const trait = bigFiveResults[key];
+                 doc.text(`${trait.name_en} (${trait.lowLabel_en} <-> ${trait.highLabel_en}): ${trait.score} / ${trait.maxScore}`, indent + 5, y);
+                y += lineHeight;
+            }
+            y += sectionGap / 2;
+
+            const learningStyleResults = calculateLearningStyleScores();
+            doc.setFontSize(18);
+            doc.text("Learning Style Results", indent, y);
+            y += lineHeight;
+            doc.setFontSize(12);
+            for(const key in learningStyleResults) {
+                const style = learningStyleResults[key];
+                doc.text(`${style.name_en}: ${style.score} / ${style.maxScore}`, indent + 5, y);
+                y += lineHeight;
+            }
+
+            doc.save("Assessment_Report.pdf");
+        }
+
+        // --- 初始化 ---
+        populateMAI();
+        populateBigFive();
+        populateLearningStyle();
+    });
+    </script>
+</body>
+</html>
